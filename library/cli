@@ -1,0 +1,80 @@
+const inquirer = require('inquirer');
+const { writeFile } = require('fs/promises');
+const Svg = require('./svg');
+const Shapes = require('./shapes');
+const Circle = require('./circles');
+const Triangle = require('./triangles');
+const Square = require('./squares');
+const Text = require('./text');
+
+class CLI {
+    run() {
+        return inquirer
+            .prompt([
+                {
+                    type: 'input',
+                    name: 'text',
+                    message: 'Please enter the characters(up to three characters in length):',
+                    validate: (input) => {
+                        if (input.length > 3) {
+                            return 'Please use up to 3 characters.'
+                        } else {
+                            return true;
+                        }
+                    }
+                },
+                {
+                    type: 'list',
+                    name: 'shape',
+                    message: 'Choose a shape for the background:',
+                    choices: ['Triangle', 'Circle', 'Square'],
+                },
+                {
+                    type: 'input',
+                    name: 'shapeColor',
+                    message: 'Choose a color for the shape (name or hexadecimal code):'
+                },
+                {
+                    type: 'input',
+                    name: 'textColor',
+                    message: 'Choose a color for the text(name or hexadecimal code):'
+                },
+            ])
+            .then(({ text, shape, shapeColor, textColor }) => {
+                let selectedShape;
+
+                switch(shape) {
+                    case 'Triangle' :
+                    selectedShape = new Triangle();
+                    break
+                    case 'Circle' :
+                    selectedShape = new Circle();
+                    break
+                    default :
+                    selectedShape = new Square();
+                    break;
+                }
+                
+                const selectedText = new Text();
+
+                selectedShape.setColor(shapeColor);
+                selectedText.setColor(textColor);
+
+                const svg = new Svg();
+
+                svg.setTextSvg(selectedText, text);
+                svg.setShapeSvg(selectedShape);
+
+                return writeFile('./created/logo.svg', svg.render());
+            })
+            .then(() => {
+                console.log(`Generated logo.svg and placed in the /created folder!`)
+            })
+            .catch((err) => {
+                console.log(err);
+                console.log('Oops, something went wrong.');
+            })
+    }
+}
+
+module.exports = CLI;
